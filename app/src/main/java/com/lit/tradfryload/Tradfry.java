@@ -15,16 +15,13 @@ public class Tradfry
     {
         gwIP = ip;
         gateway = new Gateway(gwIP);
-        login(newCreds());
+        //login(newCreds());
     }
 
-    static public Credentials newCreds() throws FileNotFoundException
+    public Credentials newCreds() throws FileNotFoundException
     {
         System.out.println("Gettin new Creds");
-        Credentials credentials = new Gateway("192.168.178.27").connect("UlBKejOQzM99rnL0");
-        String identity = credentials.getIdentity();
-        String key = credentials.getKey();
-        return new Credentials(identity, key);
+        return gateway.connect("UlBKejOQzM99rnL0");
     }
 
     public void login(Credentials creds)

@@ -18,7 +18,12 @@ public class MainActivity extends AppCompatActivity
     Button testbtn;
     SharedPreferences prefs;
     Credentials creds;
-    Gateway gateway;
+    Tradfry fry = new Tradfry("192.168.178.27");
+
+    public MainActivity() throws FileNotFoundException
+    {
+
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -32,7 +37,7 @@ public class MainActivity extends AppCompatActivity
         if(creds.getIdentity() == null || creds.getKey() == null)
         {
             try {
-                creds = Tradfry.newCreds();
+                creds = fry.newCreds();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
@@ -41,15 +46,17 @@ public class MainActivity extends AppCompatActivity
             editor.putString("key", creds.getKey());
             editor.apply();
         }
-
+        else
+        {
+            fry.gateway.connect(creds);
+        }
         testbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
             {
-                gateway.connect(creds);
-                gateway.getDevices();
+                fry.gateway.getDevices();
                 System.out.println("DeviceNames:");
-                for(Device dev: gateway.getDevices())
+                for(Device dev: fry.gateway.getDevices())
                     System.out.println(dev.getName());
             }
         });
