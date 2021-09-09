@@ -1,7 +1,10 @@
 package com.lit.tradfryload;
 
+import android.os.AsyncTask;
+
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.List;
 
 import nl.stijngroenen.tradfri.device.Device;
 import nl.stijngroenen.tradfri.device.Gateway;
@@ -9,60 +12,62 @@ import nl.stijngroenen.tradfri.util.Credentials;
 
 public class Tradfry
 {
-    String gwIP;
+    String gwIP = "192.168.178.27";
+    String code = "UlBKejOQzM99rnL0";
     Gateway gateway;
-    public Tradfry(String ip) throws FileNotFoundException
-    {
-        gwIP = ip;
-        gateway = new Gateway(gwIP);
-        //login(newCreds());
-    }
 
-    public Credentials newCreds() throws FileNotFoundException
+    public Tradfry()
     {
-        System.out.println("Gettin new Creds");
-        return gateway.connect("UlBKejOQzM99rnL0");
-    }
-
-    public void login(Credentials creds)
-    {
-        System.out.println("Loggin in");
-        gateway.connect(creds);
-    }
-
-    public void run() throws FileNotFoundException
-    {
-        login(newCreds());
-        System.out.println("Printing DeviceNames:");
-        for(Device dev: gateway.getDevices())
-            System.out.println(dev.getName());
-        turn9off();
-    }
-
-    public ArrayList<Device> getDevices()
-    {
-        ArrayList<Device> list = new ArrayList<>();
-        for(Device dev: gateway.getDevices())
-            list.add(dev);
-        return list;
+        gateway = new Gateway("192.168.178.27");
     }
 
     public void test()
     {
-        gateway.getDevices()[4].toLight().setOn(false);
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                Gateway gateway = new Gateway(gwIP);
+                Credentials credentials = gateway.connect(code);
+                String identity = credentials.getIdentity();
+                String key = credentials.getKey();
+                System.out.println("Identity: " + identity + " Key: " + key);
+                gateway.getDevice(65560).toPlug().setOn(false);
+            }
+        });
     }
 
-    public  void turnOn(int dev)
+    public void init(String ident, String key)
     {
-        gateway.getDevices()[dev].toLight().setOn(true);
+        Credentials cr = new Credentials();
+        cr.setIdentity(ident);
+        cr.setKey(key);
+        gateway.connect(cr);
     }
 
-    public  void turnOff(int dev)
+    public void turnOff()
     {
-        gateway.getDevices()[dev].toLight().setOn(false);
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                gateway.getDevice(65560).toPlug().setOn(false);
+            }
+        });
     }
 
-    public void turn9on(){gateway.getDevices()[9].toLight().setOn(true);};
+    public void turnOn()
+    {
+        AsyncTask.execute(new Runnable() {
+            @Override
+            public void run() {
+                gateway.getDevice(65560).toPlug().setOn(true);
+            }
+        });
+    }
 
-    public void turn9off(){gateway.getDevices()[9].toLight().setOn(false);};
+    public Credentials newCreds()
+    {
+        Gateway gateway = new Gateway(gwIP);
+        Credentials credentials = gateway.connect(code);
+        return credentials;
+    }
 }

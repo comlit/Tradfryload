@@ -6,19 +6,31 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
+import android.widget.SeekBar;
+import android.widget.Switch;
+import android.widget.TextView;
 
 import java.io.FileNotFoundException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import nl.stijngroenen.tradfri.device.Device;
-import nl.stijngroenen.tradfri.device.Gateway;
 import nl.stijngroenen.tradfri.util.Credentials;
 
 public class MainActivity extends AppCompatActivity
 {
-    Button testbtn;
+    Button testbtn, newbtn;
+    TextView text;
+    SeekBar bar;
+    Switch witch;
     SharedPreferences prefs;
-    Credentials creds;
-    Tradfry fry = new Tradfry("192.168.178.27");
+    SharedPreferences.Editor edit;
+    int prog;
+    boolean onoff;
+    String ident, key, nochGutBis;
+    Tradfry trad;
+
 
     public MainActivity() throws FileNotFoundException
     {
@@ -30,35 +42,112 @@ public class MainActivity extends AppCompatActivity
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        testbtn = findViewById(R.id.button);
+        initViews();
+        initPrefs();
+        initTrad();
 
+
+        initListeners();
+    }
+
+    public void initTrad()
+    {
+        trad = new Tradfry();
+        if(ident == "" || key == "" || LocalDateTime.parse(nochGutBis).isBefore(LocalDateTime.now()))
+            newCreds();
+        trad.init(ident, key);
+        nochGutBis = LocalDateTime.now().plusDays(40).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    }
+
+    public void newCreds()
+    {
+        Credentials cred = trad.newCreds();
+        ident = cred.getIdentity();
+        key = cred.getKey();
+        System.out.println("Hole neue Credentials!!!!!!!! \n\n\n");
+    }
+
+    public void initPrefs()
+    {
         prefs = getSharedPreferences("prefs", MODE_PRIVATE);
-        creds = new Credentials(prefs.getString("identity", null), prefs.getString("key", null));
-        if(creds.getIdentity() == null || creds.getKey() == null)
-        {
-            try {
-                creds = fry.newCreds();
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
+        edit = prefs.edit();
+        prog = prefs.getInt("pimmel", 80);
+        onoff = prefs.getBoolean("onoff", true);
+        ident = prefs.getString("identity", "");
+        key = prefs.getString("key", "");
+        nochGutBis = prefs.getString("nochGutBis", "01/01/2000");
+
+        text.setText("Laden bis: " + prog + "%");
+        bar.setProgress(prog);
+        witch.setChecked(onoff);
+    }
+
+    public void savePrefs()
+    {
+        edit.putInt("pimmel", prog);
+        edit.putBoolean("onoff", onoff);
+        edit.putString("identity", ident);
+        edit.putString("key", key);
+        edit.putString("nochGutBis", nochGutBis);
+        edit.apply();
+    }
+
+    public void initListeners()
+    {
+        newbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                trad.turnOn();
             }
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString("identity", creds.getIdentity());
-            editor.putString("key", creds.getKey());
-            editor.apply();
-        }
-        else
-        {
-            fry.gateway.connect(creds);
-        }
+        });
         testbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v)
             {
-                fry.gateway.getDevices();
-                System.out.println("DeviceNames:");
-                for(Device dev: fry.gateway.getDevices())
-                    System.out.println(dev.getName());
+                trad.turnOff();
+            }
+        });
+
+        bar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                text.setText("Laden bis: " + Integer.toString(progress) + "%");
+                prog = progress;
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        witch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                onoff = isChecked;
             }
         });
     }
+
+    public void initViews()
+    {
+        testbtn = findViewById(R.id.button);
+        text = findViewById(R.id.textView2);
+        bar = findViewById(R.id.seekBar);
+        witch = findViewById(R.id.switch2);
+        newbtn = findViewById(R.id.button2);
+    }
+
+    @Override
+    protected void onStop()
+    {
+        super.onStop();
+        savePrefs();
+    }
+
 }
