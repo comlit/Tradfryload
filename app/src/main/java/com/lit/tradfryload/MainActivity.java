@@ -2,6 +2,7 @@ package com.lit.tradfryload;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
@@ -48,6 +49,8 @@ public class MainActivity extends AppCompatActivity
 
 
         initListeners();
+        Intent intent = new Intent(this, BackgroundService.class);
+        //startService(intent);
     }
 
     public void initTrad()
