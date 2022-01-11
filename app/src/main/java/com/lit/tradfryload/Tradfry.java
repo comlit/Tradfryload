@@ -12,13 +12,14 @@ import nl.stijngroenen.tradfri.util.Credentials;
 
 public class Tradfry
 {
-    String gwIP = "192.168.178.27";
-    String code = "UlBKejOQzM99rnL0";
+
+    String gwIP = App.getAppResources().getString(R.string.GWIP);
+    String code = App.getAppResources().getString(R.string.GWcode);
     Gateway gateway;
 
     public Tradfry()
     {
-        gateway = new Gateway("192.168.178.27");
+        gateway = new Gateway(gwIP);
     }
 
     public void test()
